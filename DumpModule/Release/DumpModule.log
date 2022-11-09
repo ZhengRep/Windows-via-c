@@ -1,0 +1,10 @@
+﻿  Source.cpp
+E:\Vstudio2019\Windows via c\DumpModule\Source.cpp(10,11): warning C4477: 'wprintf' : format string '%08p' requires an argument of type 'void *', but variadic argument 1 has type 'UINT'
+E:\Vstudio2019\Windows via c\DumpModule\Source.cpp(13,11): warning C4477: 'wprintf' : format string '%08p' requires an argument of type 'void *', but variadic argument 1 has type 'const IMAGE_DOS_HEADER'
+E:\Vstudio2019\Windows via c\DumpModule\Source.cpp(17,11): warning C4477: 'wprintf' : format string '%08p' requires an argument of type 'void *', but variadic argument 1 has type 'UINT'
+  Generating code
+  4 of 5 functions (80.0%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    0 functions had inline decision re-evaluated but remain unchanged
+  Finished generating code
+  DumpModule.vcxproj -> E:\Vstudio2019\Windows via c\Release\DumpModule.exe

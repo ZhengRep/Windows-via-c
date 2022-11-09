@@ -269,3 +269,4 @@ void CheckInstances()
         MessageBox(NULL, _T("Another wrong!\r\n"), NULL, 0);
     }
 }
+
