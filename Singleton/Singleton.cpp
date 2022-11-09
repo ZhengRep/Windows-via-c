@@ -2,7 +2,9 @@
 //
 
 #include "framework.h"
+#include<strsafe.h>
 #include "Singleton.h"
+#include<sddl.h>
 
 #define MAX_LOADSTRING 100
 
@@ -11,8 +13,11 @@ HINSTANCE hInst;                                // current instance
 WCHAR szTitle[MAX_LOADSTRING];                  // The title bar text
 WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
 
+HANDLE g_hNamespace;
+HANDLE g_hSingleton;
+
 LPCTSTR g_szBoundary = _T("Singleton-Boundary");
-LPCTSTR g_szNamespave = _T("Singleton-Namespace");
+LPCTSTR g_szNamespace = _T("Singleton-Namespace");
 HANDLE g_hBoundary;
 HWND hWnd;
 
@@ -23,6 +28,7 @@ LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 
 void AddTextToWindow(PCTSTR pszFormat, ...);
+void CheckInstances();
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR    lpCmdLine, _In_ int       nCmdShow)
 {
@@ -30,6 +36,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
     UNREFERENCED_PARAMETER(lpCmdLine);
 
     // TODO: Place code here.
+    CheckInstances();
 
     // Initialize global strings
     LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
@@ -153,6 +160,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             HDC hdc = BeginPaint(hWnd, &ps);
             // TODO: Add any drawing code that uses hdc here...
 
+
             EndPaint(hWnd, &ps);
         }
         break;
@@ -185,36 +193,79 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     return (INT_PTR)FALSE;
 }
 
-void DrawText(PCTSTR text)
-{
-    PAINTSTRUCT ps;
-    HDC hdc = BeginPaint(hWnd, &ps);
-    // TODO: Add any drawing code that uses hdc here...
-    TextOut(hdc, 10, 10, text, _tcslen(text));
-
-    EndPaint(hWnd, &ps);
-}
-
 void AddTextToWindow(PCTSTR pszFormat, ...)
 {
     va_list argList;
     va_start(argList, pszFormat);
-    TCHAR sz[20 * 1024];
+
+    TCHAR sz[100];
     _vstprintf_s(sz, pszFormat, argList);
-    DrawText(sz);
+
 
     va_end(argList);
 }
 
 void CheckInstances()
 {
+    //create the boundary descriptor
     g_hBoundary = CreateBoundaryDescriptor(g_szBoundary, 0);
+    
+    //create a sid corresponding to the local administrator group
     BYTE localAdminSID[SECURITY_MAX_SID_SIZE];
     PSID pLocalAdminSID = &localAdminSID;
     DWORD cbSID = sizeof(localAdminSID);
     if (!CreateWellKnownSid(WinBuiltinAdministratorsSid, NULL, pLocalAdminSID, &cbSID)) {
-
+        //MessageBox(NULL, _T("AddSIDToBoundaryDescriptor failed!\r\n"), NULL, 0);
+        return;
     }
 
+    //Associate the local admin sid to the boundary descriptor
+    if (!AddSIDToBoundaryDescriptor(&g_hBoundary, pLocalAdminSID)) {
+        return;
+    }
 
+    //Create the namespace for local administrators only
+    SECURITY_ATTRIBUTES sa;
+    sa.nLength = sizeof(sa);
+    sa.bInheritHandle = FALSE;
+    if (!ConvertStringSecurityDescriptorToSecurityDescriptor(_T("D:(A;;GA;;;BA)"), SDDL_REVISION_1, &sa.lpSecurityDescriptor, NULL)) {
+        return;
+    }
+
+    g_hNamespace = CreatePrivateNamespace(&sa, g_hBoundary, g_szNamespace);
+    LocalFree(sa.lpSecurityDescriptor);
+
+    DWORD dErrorCode = GetLastError();
+    if (g_hNamespace == NULL) {
+        if (dErrorCode == ERROR_ACCESS_DENIED) {
+            MessageBox(NULL, _T("Acess denied and should run as administrator!\r\n"), NULL, 0);
+            return;
+        }
+        else {
+            if (dErrorCode == ERROR_ALREADY_EXISTS) {
+                g_hNamespace = OpenPrivateNamespace(g_hBoundary, g_szBoundary);
+                if (g_hNamespace == NULL) {
+                    return;
+                }
+            }
+            else {
+                return;
+            }
+        }
+    }
+
+    //try to create the nutex object with a name
+    TCHAR szMutexName[64];
+    StringCchPrintf(szMutexName, _countof(szMutexName), _T("%s%s\r\n"), g_szNamespace, _T("Singleton"));
+    g_hSingleton = CreateMutex(NULL, FALSE, szMutexName);
+    dErrorCode = GetLastError();
+    if (dErrorCode == ERROR_ALREADY_EXISTS) {
+        MessageBox(NULL, _T("Another instance of Singleton is running!\r\n"), NULL, 0);
+    }
+    else if(dErrorCode == ERROR_SUCCESS) {
+        MessageBox(NULL, _T("First instance of Singleton is running!\r\n"), NULL, 0);
+    }
+    else {
+        MessageBox(NULL, _T("Another wrong!\r\n"), NULL, 0);
+    }
 }
