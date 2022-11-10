@@ -6,7 +6,7 @@ extern "C" const IMAGE_DOS_HEADER __ImageBase;
 void DumpModule()
 {
 	//get base address of the running module
-	HMODULE hModule = GetModuleHandle(L"DumpModule.exe");
+	HMODULE hModule = GetModuleHandle(L"DumpModule.exe"); //NULL
 	_tprintf(_T("with GetModuleHandle(NULL) = 0x%08p \r\n"), (UINT)hModule);
 
 	//use the pseudo-variable _ImageBase to get
