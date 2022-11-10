@@ -22,17 +22,18 @@ void DumpEnvStrings()
 	int num = 0;
 	while (pszCurrent != NULL) {
 		//skip the meaningless strings
+		/*
 		if (*pszCurrent != _T('=')) {
-			PTSTR pszPos = _tcschr(pszCurrent, _T('='));
-			pszPos++;
+			PTSTR pszValue = _tcschr(pszCurrent, _T('='));
+			pszValue++;
 
 			//copy the variable name
-			size_t cbNameLength = pszPos - pszCurrent - sizeof(TCHAR);
+			size_t cbNameLength = pszValue - pszCurrent - sizeof(TCHAR);
 			hResult = StringCbCopyN(szName, MAX_PATH, pszCurrent, cbNameLength);
 			if (FAILED(hResult)) break;
 
 			//copy the variable value
-			hResult = StringCbCopyN(szValue, MAX_PATH, pszPos, _tcslen(pszPos) + 1);
+			hResult = StringCbCopyN(szValue, MAX_PATH, pszValue, _tcslen(pszValue));
 			if (SUCCEEDED(hResult)) {
 				_tprintf(_T("[%d] %s = %s \r\n"), num, szName, szValue);
 			}
@@ -41,12 +42,14 @@ void DumpEnvStrings()
 			}
 			else{
 				_tprintf(_T("[%d] %s = ??? \r\n"), num, szName);
-				break;
 			}
 		}
 		else {
 			_tprintf(_T("[%d] %s \r\n"), num, pszCurrent);
 		}
+		*/
+		_tprintf(_T("[%d] %s \r\n"), num, pszCurrent);
+
 		num++;
 
 		//move to the and of the string
