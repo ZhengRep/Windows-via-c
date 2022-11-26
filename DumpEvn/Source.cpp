@@ -4,7 +4,7 @@
 
 void DumpEnvStrings()
 {
-	PTSTR pEnvBlock = GetEnvironmentStrings();
+	PTSTR pEvnBlock = GetEnvironmentStrings();
 
 	/*
 	=::=::\.
@@ -18,9 +18,9 @@ void DumpEnvStrings()
 	TCHAR szValue[MAX_PATH];
 	HRESULT hResult = S_OK;
 	
-	PTSTR pszCurrent = pEnvBlock;
+	PTSTR pszCurrent = pEvnBlock;
 	int num = 0;
-	while (pszCurrent != NULL) {
+	while (pszCurrent != NULL) { 
 		//skip the meaningless strings
 		/*
 		if (*pszCurrent != _T('=')) {
@@ -60,6 +60,7 @@ void DumpEnvStrings()
 
 		if (*pszCurrent == _T('\0')) break;
 	}
+	FreeEnvironmentStrings(pEvnBlock);
 }
 
 int _tmain(int argc, TCHAR* argv, TCHAR* evn[])
@@ -71,4 +72,20 @@ int _tmain(int argc, TCHAR* argv, TCHAR* evn[])
 	_tprintf(_T("************************\r\n"));
 	DumpEnvStrings();
 	return 0;
+}
+
+void PrintEnvironmentVariable(PCTSTR pszVariableName)
+{
+	PTSTR pszValue = NULL;
+	DWORD dwResult = GetEnvironmentVariable(pszVariableName, pszValue, 0);
+	if (dwResult != 0) {
+		DWORD size = dwResult * sizeof(TCHAR);
+		pszValue = (PTSTR)malloc(size);
+		GetEnvironmentVariable(pszVariableName, pszValue, size);
+		_tprintf(_T("%s = %s \r\n"), pszVariableName, pszValue);
+		free(pszValue);
+	}
+	else {
+		_tprintf(_T("'%s' = <unknown valu> \r\n"), pszVariableName);
+	}
 }
